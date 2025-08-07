@@ -24,29 +24,55 @@ def read_qr_code(image_path):
             raise ValueError(f"Không thể đọc ảnh từ: {image_path}")
         
         # Thử decode trực tiếp trước
+        print("🔍 Bước 1: Thử đọc QR code từ ảnh gốc...")
         qr_codes = pyzbar.decode(image)
         
         # Nếu không tìm thấy QR code, thử preprocessing
         if not qr_codes:
+            print("❌ Ảnh gốc: Không tìm thấy QR code")
+            
             # Chuyển sang grayscale
+            print("🔍 Bước 2: Chuyển sang grayscale...")
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             qr_codes = pyzbar.decode(gray)
             
             # Nếu vẫn không tìm thấy, thử với các kỹ thuật khác
             if not qr_codes:
+                print("❌ Grayscale: Không tìm thấy QR code")
+                
                 # Thử với gaussian blur để giảm noise
+                print("🔍 Bước 3: Áp dụng Gaussian Blur...")
                 blurred = cv2.GaussianBlur(gray, (5, 5), 0)
                 qr_codes = pyzbar.decode(blurred)
                 
                 # Thử với adaptive threshold
                 if not qr_codes:
+                    print("❌ Gaussian Blur: Không tìm thấy QR code")
+                    
+                    print("🔍 Bước 4: Áp dụng Adaptive Threshold...")
                     thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
                     qr_codes = pyzbar.decode(thresh)
                 
-                # Thử với OTSU threshold
-                if not qr_codes:
-                    _, thresh_otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                    qr_codes = pyzbar.decode(thresh_otsu)
+                    # Thử với OTSU threshold
+                    if not qr_codes:
+                        print("❌ Adaptive Threshold: Không tìm thấy QR code")
+                        
+                        print("🔍 Bước 5: Áp dụng OTSU Threshold...")
+                        _, thresh_otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                        qr_codes = pyzbar.decode(thresh_otsu)
+                        
+                        if not qr_codes:
+                            print("❌ OTSU Threshold: Không tìm thấy QR code")
+                        else:
+                            print("✅ THÀNH CÔNG với OTSU Threshold!")
+                    else:
+                        print("✅ THÀNH CÔNG với Adaptive Threshold!")
+                else:
+                    print("✅ THÀNH CÔNG với Gaussian Blur!")
+            else:
+                print("✅ THÀNH CÔNG với Grayscale!")
+        else:
+            print("✅ THÀNH CÔNG với ảnh gốc!")
         
         results = []
         for qr_code in qr_codes:
